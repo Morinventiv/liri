@@ -3,43 +3,83 @@ require("dotenv").config();
 var request = require("request");
 var fs = require("fs");
 var keys = require("./keys.js");
-var Spotify = require("node-spotify-api");
+// var Spotify = require("node-spotify-api");
+var spotify = require("spotify");
+
 var Twitter = require("twitter");
 
-var spotify = new Spotify(keys.spotify);
-var client = new Twitter(keys.twitter);
+// var Spotify = new Spotify(keys.spotify);
 
+//Twitter function to get tweets
+var getTweets = function () {
+	var client = new Twitter(keys.twitter);
 
-var liriFunc = process.argv[2];
-var number = process.argv[3];
-
-
-if (liriFunc === "my-tweets") {
-
-	console.log("my tweets");
-}
-
-if (liriFunc === "spotify-this-song") {
-
-	console.log("Spotify");
-
-}
-
-if (liriFunc === "movie-this") {
-
-	//Run a request to the OMDB API with the movie specified
-	var movie = "Mr. Nobody";
-	request("http://www.omdbapi.com/?t=" + movie + "&y=&plot=short&apikey=10074fa4", function (error, response, body) {
-
-		// If the request is successful (i.e. if the response status code is 200)
-		if (!error && response.statusCode === 200) {
-
-			console.log("The movie's rating is: " + JSON.parse(body).imdbRating);
-			console.log(JSON.parse(body));
+	var params = { screen_name: 'morinventiv1' };
+	client.get('statuses/user_timeline', params, function (error, tweets, response) {
+		if (!error) {
+			// console.log(tweets);
+			for (var i = 0; i < tweets.length; i++) {
+				console.log(tweets[i].created_at);
+				console.log(' ');
+				console.log(tweets[i].text);
+			}
 		}
 	});
+}
+//end of Twitter function
 
-	console.log("my movie");
-
+var getArtistName = function (artist) {
+	return artist.name;
 }
 
+//spotify npm package data -- 17:20
+// var getSpotify = function () {
+
+// 	spotify.search({ type: 'track', query: songName }, function (err, data) {
+// 		if (err) {
+// 			console.log('Error occurred: ' + err);
+// 			return;
+// 		}
+
+// 		console.log(data);
+// 	});
+// }
+//end of spotify pkg
+var getMovie = function (movieName) {
+	request('http://www.omdbapi.com/?apikey=10074fa4&t=' + movieName, function (error, response, body) {
+		console.log('error:', error); // Print the error if one occurred
+		console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+		var jsonData = JSON.parse(body);
+		console.log('Title: ' + jsonData.Title);
+		console.log('Year: ' + jsonData.Year);
+		console.log('IMDB Rating: ' + jsonData.imdbRating);
+		console.log('Rotten Tomatoes Rating: ' + jsonData.tomatoRating);
+		console.log('Country: ' + jsonData.Country);
+		console.log('Language: ' + jsonData.Language);
+		console.log('Plot: ' + jsonData.Plot);
+		console.log('Actors: ' + jsonData.Actors);
+
+	});
+}
+
+var pick = function (caseData, functionData) {
+	switch (caseData) {
+		case 'my-tweets':
+			getTweets();
+			break;
+		case 'spotify-this-song':
+			getSpotify(functionData);
+			break;
+		case 'movie-this':
+			getMovie(functionData);
+		default:
+			console.log('LIRI does not know that task');
+			break;
+	}
+}
+
+var runThis = function (argOne, argTwo) {
+	pick(argOne, argTwo);
+};
+
+runThis(process.argv[2], process.argv[3]);
